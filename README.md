@@ -17,7 +17,7 @@ Im Gegensatz zu einfachen Auslese-Skripten bietet der **Marstek Jupiter C+** ech
 ---
 
 ## ⚡ Home Assistant Energy Dashboard
-Dieses Projekt ist darauf optimiert, deinen Speicher perfekt im offiziellen **Energie-Dashboard** abzubilden. Für maximale Stabilität nutzen wir hierfür die summierten Sensoren:
+Dieses Projekt ist darauf optimiert, deinen Speicher perfekt im offiziellen **Energie-Dashboard** von Home Assistant abzubilden. Für maximale Stabilität nutzen wir hierfür die summierten Sensoren:
 
 * **Solarproduktion:** `sensor.marstek_jupiter_c_solar_gesamtleistung`
 * **Batteriespeicher (Eingehend):** `sensor.marstek_jupiter_c_batterie_energie_geladen`
@@ -46,42 +46,27 @@ Verbinde **A+** und **B-** des Adapters über den oben verlinkten Stecker mit de
 
 ---
 
-## 📊 Wichtigste Entitäten (Sensoren)
-
-| Beschreibung | Entitäts-ID in Home Assistant |
-| :--- | :--- |
-| **Solar Gesamtleistung** | `sensor.marstek_jupiter_c_solar_gesamtleistung` |
-| **Solar Erzeugung (kWh)** | `sensor.marstek_jupiter_c_solar_erzeugung_gesamt` |
-| **Batterie SOC** | `sensor.marstek_jupiter_c_batterie_soc` |
-| **Batterie Status/Restzeit**| `sensor.marstek_jupiter_c_batterie_status_restzeit` |
-| **Netz Ausgangsleistung** | `sensor.marstek_jupiter_c_netz_ausgangsleistung` |
-| **PV Leistung (1-4)** | `sensor.marstek_jupiter_c_pv1_leistung` bis `..._pv4_leistung` |
-
----
-
-## 🧠 Technische Insights
-
-### Stabilisierte Solar-Messung
-Anstatt das interne Tagesertrags-Register zu nutzen (welches oft ungenau ist), summiert diese Konfiguration die Echtzeit-Leistung aller 4 PV-Strings (`pv1_p` bis `pv4_p`) und wandelt diese via Riemann-Summe (Integration) in einen stabilen kWh-Wert um.
-
-### Warum 16-Bit (U_WORD) statt 32-Bit?
-Die Analyse der Register hat gezeigt, dass der **Marstek Jupiter C+** die Ertragsdaten in stabilen 16-Bit Registern liefert. Versuche, 32-Bit (DWORD) zu lesen, führen zu korrupten Daten und Millionen-Werten.
-
----
-
 ## ⚙️ Installation & Sicherheit
 
-### ⚠️ Nutzung von Secrets
+### 1. Nutzung von Secrets
 Diese Konfiguration nutzt eine **`secrets.yaml`**, um deine WLAN-Daten zu schützen. Erstelle im ESPHome-Verzeichnis eine Datei namens `secrets.yaml`:
 ```yaml
 wifi_ssid: "DEINE_SSID"
 wifi_password: "DEIN_PASSWORT"
 ```
 
-### Konfiguration in Home Assistant
-Wähle nach dem ersten Start im Dashboard:
-1. **Akkugröße Auswahl** (`select.marstek_jupiter_c_akkugrosse_auswahl`)
-2. **Entladestopp Reserve** (`number.marstek_jupiter_c_batterie_entladestopp_reserve`)
+### 2. Statische IP-Adresse (Wichtig!)
+In der Datei `marstek-jupiter-c-modbus.yaml` ist in **Zeile 44** eine feste IP-Adresse (`192.168.201.93`) vordefiniert. 
+* **Anpassen:** Ändere diese Adresse auf eine freie IP in deinem Netzwerk.
+* **DHCP:** Falls du keine feste IP möchtest, lösche die Zeilen 43 bis 46 (`manual_ip` Block).
+
+### 3. Schritte:
+1. Lade die YAML-Dateien in deinen ESPHome-Ordner.
+2. Flashe den ESP32.
+3. Wähle in Home Assistant nach dem ersten Start unter Einstellungen/Geräte&Dienste/ESPHome:
+    * **Akkugröße Auswahl** (`select.marstek_jupiter_c_akkugrosse_auswahl`)
+    * **Entladestopp Reserve** (`number.marstek_jupiter_c_batterie_entladestopp_reserve`)
+    * Batterie Entladestopp Reserve muss zwingend manuel eingetragen werden da dieser Wert nicht auslesbar ist !!! Dieser dient der Berechnung der Restenergiezeit.
 
 ---
 
