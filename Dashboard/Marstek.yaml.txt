@@ -1,0 +1,231 @@
+views:
+  - type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: vertical-stack
+            cards:
+              - type: heading
+                heading: ⚡ Marstek Jupiter C+
+                heading_style: title
+              - type: grid
+                columns: 4
+                square: false
+                cards:
+                  - type: custom:mushroom-template-card
+                    layout: vertical
+                    entity: sensor.marstek_jupiter_c_solar_gesamtleistung
+                    primary: '{{ states(entity) | float(0) | round(0) }} W'
+                    secondary: >
+                      {% set lade =
+                      states('sensor.marstek_jupiter_c_batterie_ladeleistung') |
+                      float(0) %} {% if lade > 0 %}↑ {{ lade | round(0) }}W{%
+                      else %}PV Ertrag{% endif %}
+                    icon: mdi:solar-power
+                    icon_color: orange
+                  - type: custom:mushroom-template-card
+                    entity: sensor.marstek_jupiter_c_batterie_soc
+                    primary: '{{ states(entity) | float(0) | round(0) }} %'
+                    secondary: >-
+                      {{
+                      states("sensor.marstek_jupiter_c_batterie_status_restzeit")
+                      }}
+                    icon: |
+                      {% set soc = states(entity) | int(0) %}
+                      {% if soc > 90 %} mdi:battery
+                      {% elif soc > 70 %} mdi:battery-70
+                      {% elif soc > 40 %} mdi:battery-40
+                      {% else %} mdi:battery-20
+                      {% endif %}
+                    color: >
+                      {% set lade =
+                      states('sensor.marstek_jupiter_c_batterie_ladeleistung') |
+                      float(0) %}
+
+                      {% if lade > 0 %} cyan {% elif states(entity) | int(0) >
+                      20 %} green {% else %} red {% endif %}
+                    vertical: true
+                    features_position: bottom
+                  - type: custom:mushroom-template-card
+                    layout: vertical
+                    entity: sensor.shellypro3em_leistung
+                    primary: '{{ states(entity) | float(0) | round(0) }} W'
+                    secondary: >-
+                      IN: {{
+                      states("sensor.marstek_jupiter_c_netz_ausgangsleistung") |
+                      float(0) | round(0) }}W
+                    icon: mdi:transmission-tower
+                    icon_color: blue
+                  - type: custom:mushroom-template-card
+                    layout: vertical
+                    entity: sensor.verbrauch_haus_tag_energy_daily
+                    primary: '{{ states(entity) | float(0) | round(2) }} kWh'
+                    secondary: Tag
+                    icon: mdi:lightning-bolt
+                    icon_color: purple
+              - type: grid
+                columns: 2
+                square: false
+                cards:
+                  - type: gauge
+                    entity: sensor.marstek_jupiter_c_solar_gesamtleistung
+                    name: Solar Erzeugung
+                    unit: W
+                    min: 0
+                    max: 2000
+                    needle: true
+                    severity:
+                      green: 600
+                      yellow: 200
+                      red: 0
+                  - type: gauge
+                    entity: sensor.marstek_jupiter_c_netz_ausgangsleistung
+                    name: Haus Einspeisung
+                    unit: W
+                    min: 0
+                    max: 800
+                    needle: true
+                    severity:
+                      green: 0
+                      yellow: 400
+                      red: 700
+              - type: heading
+                heading: ☀️ Modulverteilung (Tagesverlauf)
+              - type: custom:apexcharts-card
+                graph_span: 1d
+                span:
+                  start: day
+                stacked: true
+                header:
+                  show: true
+                  title: Modul-Leistung Heute (5m Schnitt)
+                  show_states: true
+                  colorize_states: true
+                apex_config:
+                  chart:
+                    type: bar
+                    height: 200
+                  plotOptions:
+                    bar:
+                      columnWidth: 85%
+                  xaxis:
+                    type: datetime
+                    min: >-
+                      {{ now().replace(hour=6, minute=0, second=0).timestamp() *
+                      1000 }}
+                    max: >-
+                      {{ now().replace(hour=21, minute=0, second=0).timestamp()
+                      * 1000 }}
+                    labels:
+                      format: HH:mm
+                series:
+                  - entity: sensor.marstek_jupiter_c_pv1_leistung
+                    name: PV 1
+                    color: '#ff9800'
+                    group_by:
+                      func: avg
+                      duration: 5min
+                  - entity: sensor.marstek_jupiter_c_pv2_leistung
+                    name: PV 2
+                    color: '#2196f3'
+                    group_by:
+                      func: avg
+                      duration: 5min
+                  - entity: sensor.marstek_jupiter_c_pv3_leistung
+                    name: PV 3
+                    color: '#4caf50'
+                    group_by:
+                      func: avg
+                      duration: 5min
+                  - entity: sensor.marstek_jupiter_c_pv4_leistung
+                    name: PV 4
+                    color: '#f44336'
+                    group_by:
+                      func: avg
+                      duration: 5min
+              - type: grid
+                columns: 4
+                square: false
+                cards:
+                  - type: entity
+                    entity: sensor.marstek_jupiter_c_pv1_leistung
+                    name: PV1
+                  - type: entity
+                    entity: sensor.marstek_jupiter_c_pv2_leistung
+                    name: PV2
+                  - type: entity
+                    entity: sensor.marstek_jupiter_c_pv3_leistung
+                    name: PV3
+                  - type: entity
+                    entity: sensor.marstek_jupiter_c_pv4_leistung
+                    name: PV4
+      - type: grid
+        cards:
+          - type: heading
+            heading: 📊 Verlauf & Statistik
+            heading_style: title
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: Batterie Ladestand (24h)
+              show_states: true
+              colorize_states: true
+            graph_span: 24h
+            apex_config:
+              chart:
+                type: bar
+                height: 250
+              plotOptions:
+                bar:
+                  borderRadius: 4
+                  columnWidth: 80%
+            series:
+              - entity: sensor.marstek_jupiter_c_batterie_soc
+                name: Ladestand
+                type: column
+                color_threshold:
+                  - value: 0
+                    color: '#e53935'
+                  - value: 25
+                    color: '#fb8c00'
+                  - value: 60
+                    color: '#4caf50'
+                group_by:
+                  func: last
+                  duration: 1h
+            yaxis:
+              - min: 0
+                max: 100
+                apex_config:
+                  tickAmount: 5
+          - type: vertical-stack
+            cards:
+              - type: heading
+                heading: 🛠️ System-Diagnose
+              - type: grid
+                columns: 2
+                square: false
+                cards:
+                  - type: gauge
+                    entity: sensor.marstek_jupiter_c_wlan_signalstarke
+                    name: WLAN
+                    unit: dBm
+                    min: -100
+                    max: -30
+                  - type: entity
+                    entity: sensor.marstek_jupiter_c_tages_erzeugung
+                    name: Erzeugung Heute
+              - type: entities
+                entities:
+                  - entity: sensor.marstek_jupiter_c_system_temperatur_1
+                    name: Temp 1
+                  - entity: sensor.marstek_jupiter_c_system_temperatur_2
+                    name: Temp 2
+                  - type: section
+                    label: Batterie Details
+                  - entity: sensor.marstek_jupiter_c_batterie_strom
+                    name: Stromfluss (A)
+                  - entity: sensor.marstek_jupiter_c_batterie_spannung
+                  - entity: sensor.marstek_jupiter_c_ip_adresse
+                    name: IP Adresse
+    max_columns: 10
