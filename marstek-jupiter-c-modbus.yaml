@@ -1,0 +1,434 @@
+esphome:
+  name: marstek-jupiter-c
+  friendly_name: Marstek Jupiter C
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+web_server:
+  port: 80
+
+preferences:
+  flash_write_interval: 15min
+
+api:
+ota:
+  - platform: esphome
+
+# --- AUTO-HEALING / RESET ---
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: "CET-1CEST,M3.5.0,M10.5.0/3"
+    on_time:
+      - seconds: 0
+        minutes: 0
+        hours: 3
+        then:
+          - button.press: system_reboot_btn
+
+button:
+  - platform: restart
+    name: "System Neustart"
+    id: system_reboot_btn
+
+logger:
+  level: DEBUG
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  manual_ip:
+    static_ip: 192.168.201.93  # <- eigene ip eintragen, oder ausklammern
+    gateway: 192.168.201.1
+    subnet: 255.255.255.0
+
+# --- MODBUS & UART ---
+uart:
+  id: modbus_bus
+  tx_pin: GPIO17
+  rx_pin: GPIO16
+  baud_rate: 115200 
+  stop_bits: 1
+
+modbus:
+  id: modbus1
+  uart_id: modbus_bus
+
+modbus_controller:
+  - id: marstek_fast
+    address: 1
+    modbus_id: modbus1
+    setup_priority: -10
+    update_interval: 5s
+  - id: marstek_slow
+    address: 1
+    modbus_id: modbus1
+    update_interval: 30s 
+  - id: marstek_v_slow
+    address: 1
+    modbus_id: modbus1
+    update_interval: 300s
+
+number:
+  - platform: template
+    name: "Batterie Entladestopp Reserve"
+    id: battery_reserve_limit
+    unit_of_measurement: "%"
+    min_value: 0
+    max_value: 25
+    step: 1
+    initial_value: 12
+    optimistic: true
+    restore_value: true
+    mode: box 
+
+select:
+  - platform: template
+    name: "Akkugröße Auswahl"
+    id: battery_size_select
+    optimistic: true
+    options: ["2.56 kWh", "5.12 kWh", "7.68 kWh", "10.24 kWh"]
+    initial_option: "5.12 kWh"
+    restore_value: true
+
+sensor:
+  # ==========================================
+  # WLAN & SYSTEM
+  # ==========================================
+  - platform: wifi_signal
+    name: "WLAN Signalstärke"
+    update_interval: 60s
+  
+  - platform: uptime
+    name: "ESP32 Laufzeit"
+    update_interval: 60s
+
+  # ==========================================
+  # PV STRINGS 1 BIS 4
+  # ==========================================
+  - platform: modbus_controller
+    modbus_controller_id: marstek_slow
+    name: "PV1 Spannung"
+    address: 0x0001
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "V"
+    filters: [multiply: 0.1]
+  - platform: modbus_controller
+    modbus_controller_id: marstek_slow
+    name: "PV1 Strom"
+    address: 0x0002
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "A"
+    filters: [multiply: 0.1]
+  - platform: modbus_controller
+    modbus_controller_id: marstek_fast
+    name: "PV1 Leistung"
+    id: pv1_p
+    address: 0x0003
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "W"
+
+  - platform: modbus_controller
+    modbus_controller_id: marstek_slow
+    name: "PV2 Spannung"
+    address: 0x0004
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "V"
+    filters: [multiply: 0.1]
+  - platform: modbus_controller
+    modbus_controller_id: marstek_slow
+    name: "PV2 Strom"
+    address: 0x0005
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "A"
+    filters: [multiply: 0.1]
+  - platform: modbus_controller
+    modbus_controller_id: marstek_fast
+    name: "PV2 Leistung"
+    id: pv2_p
+    address: 0x0006
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "W"
+
+  - platform: modbus_controller
+    modbus_controller_id: marstek_slow
+    name: "PV3 Spannung"
+    address: 0x0007
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "V"
+    filters: [multiply: 0.1]
+  - platform: modbus_controller
+    modbus_controller_id: marstek_slow
+    name: "PV3 Strom"
+    address: 0x0008
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "A"
+    filters: [multiply: 0.1]
+  - platform: modbus_controller
+    modbus_controller_id: marstek_fast
+    name: "PV3 Leistung"
+    id: pv3_p
+    address: 0x0009
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "W"
+
+  - platform: modbus_controller
+    modbus_controller_id: marstek_slow
+    name: "PV4 Spannung"
+    address: 0x000A
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "V"
+    filters: [multiply: 0.1]
+  - platform: modbus_controller
+    modbus_controller_id: marstek_slow
+    name: "PV4 Strom"
+    address: 0x000B
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "A"
+    filters: [multiply: 0.1]
+  - platform: modbus_controller
+    modbus_controller_id: marstek_fast
+    name: "PV4 Leistung"
+    id: pv4_p
+    address: 0x000C
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "W"
+
+  # ==========================================
+  # BASISWERTE
+  # ==========================================
+  - platform: modbus_controller
+    modbus_controller_id: marstek_fast
+    name: "Netz Ausgangsleistung"
+    id: out_p
+    address: 0x000D
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "W"
+    device_class: power
+
+  - platform: modbus_controller
+    modbus_controller_id: marstek_slow
+    name: "Batterie Spannung"
+    id: b_u_raw
+    address: 0x000F
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "V"
+    filters: [multiply: 0.1]
+
+  - platform: modbus_controller
+    modbus_controller_id: marstek_fast
+    name: "Batterie SOC"
+    id: b_soc_raw
+    address: 0x0010
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "%"
+    device_class: battery
+    accuracy_decimals: 0 # Entfernt die Kommastelle im Dashboard
+
+  - platform: modbus_controller
+    modbus_controller_id: marstek_fast
+    name: "Batterie Strom"
+    id: b_i_raw
+    address: 0x0011
+    register_type: holding
+    value_type: S_WORD
+    unit_of_measurement: "A"
+    filters: [multiply: 0.1]
+
+  # ==========================================
+  # ERTRAGS-STATISTIKEN
+  # ==========================================
+  - platform: modbus_controller
+    modbus_controller_id: marstek_v_slow
+    name: "Tages Erzeugung"
+    address: 0x0013
+    register_type: holding
+    value_type: U_DWORD
+    unit_of_measurement: "kWh"
+    state_class: total_increasing
+    accuracy_decimals: 2
+    filters: [multiply: 0.01]
+
+  - platform: modbus_controller
+    modbus_controller_id: marstek_v_slow
+    name: "Monats Erzeugung"
+    address: 0x0015
+    register_type: holding
+    value_type: U_DWORD
+    unit_of_measurement: "kWh"
+    accuracy_decimals: 2
+    filters: [multiply: 0.01]
+
+  - platform: modbus_controller
+    modbus_controller_id: marstek_v_slow
+    name: "Netz Einspeisung Tag"
+    address: 0x0017
+    register_type: holding
+    value_type: U_DWORD
+    unit_of_measurement: "kWh"
+    accuracy_decimals: 2
+    filters: [multiply: 0.01]
+
+  # ==========================================
+  # TEMPERATUREN
+  # ==========================================
+  - platform: modbus_controller
+    modbus_controller_id: marstek_v_slow
+    name: "System Temperatur 1"
+    address: 0x0020
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    filters: [multiply: 0.01]
+
+  - platform: modbus_controller
+    modbus_controller_id: marstek_v_slow
+    name: "System Temperatur 2"
+    address: 0x0021
+    register_type: holding
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    filters: [multiply: 0.01]
+
+  # ==========================================
+  # LOGIK-SENSOREN (Mathematik)
+  # ==========================================
+  - platform: template
+    name: "Solar Gesamtleistung"
+    id: total_pv
+    unit_of_measurement: "W"
+    device_class: power
+    lambda: |-
+      float val = 0;
+      if (!std::isnan(id(pv1_p).state)) val += id(pv1_p).state;
+      if (!std::isnan(id(pv2_p).state)) val += id(pv2_p).state;
+      if (!std::isnan(id(pv3_p).state)) val += id(pv3_p).state;
+      if (!std::isnan(id(pv4_p).state)) val += id(pv4_p).state;
+      return val;
+
+  - platform: template
+    name: "Batterie Ladeleistung"
+    id: b_charge_p
+    unit_of_measurement: "W"
+    device_class: power
+    lambda: |-
+      float pv = id(total_pv).state;
+      float out = id(out_p).state;
+      if (std::isnan(pv) || std::isnan(out)) return 0.0;
+      return (pv > out) ? (pv - out) : 0.0;
+
+  - platform: template
+    name: "Batterie Entladeleistung"
+    id: b_discharge_p
+    unit_of_measurement: "W"
+    device_class: power
+    lambda: |-
+      float pv = id(total_pv).state;
+      float out = id(out_p).state;
+      if (std::isnan(pv) || std::isnan(out)) return 0.0;
+      return (out > pv) ? (out - pv) : 0.0;
+
+  - platform: template
+    name: "Batteriekapazität Aktuell"
+    id: b_cap_wh
+    unit_of_measurement: "Wh"
+    lambda: |-
+      float s = id(b_soc_raw).state;
+      if (std::isnan(s) || s < 0) return 0.0;
+      float cap_kwh = 5.12f;
+      std::string opt = id(battery_size_select).current_option();
+      if (opt == "2.56 kWh") cap_kwh = 2.56f;
+      else if (opt == "7.68 kWh") cap_kwh = 7.68f;
+      else if (opt == "10.24 kWh") cap_kwh = 10.24f;
+      return (s * cap_kwh * 10.0f);
+
+  # --- Energie-Statistiken für HA Dashboard ---
+  - platform: integration
+    name: "Batterie Energie Geladen"
+    sensor: b_charge_p
+    time_unit: h
+    unit_of_measurement: "kWh"
+    device_class: energy
+    state_class: total_increasing
+    restore: true
+    filters: [multiply: 0.001]
+
+  - platform: integration
+    name: "Batterie Energie Entladen"
+    sensor: b_discharge_p
+    time_unit: h
+    unit_of_measurement: "kWh"
+    device_class: energy
+    state_class: total_increasing
+    restore: true
+    filters: [multiply: 0.001]
+
+text_sensor:
+  - platform: template
+    name: "Batterie Status - Restzeit"
+    id: b_runtime
+    icon: "mdi:timer-sand"
+    update_interval: 30s
+    lambda: |-
+      float charge_w = id(b_charge_p).state;
+      float discharge_w = id(b_discharge_p).state;
+      
+      float soc = id(b_soc_raw).state;
+      float reserve = id(battery_reserve_limit).state;
+      float usable_soc = soc - reserve; 
+
+      if (charge_w > 5.0f) {
+        return {"Laden"};
+      }
+      
+      if (discharge_w > 5.0f) {
+        if (usable_soc <= 0.0f) {
+          return {"Reserve erreicht"};
+        }
+        
+        float cap_kwh = 5.12f;
+        std::string opt = id(battery_size_select).current_option();
+        if (opt == "2.56 kWh") cap_kwh = 2.56f;
+        else if (opt == "7.68 kWh") cap_kwh = 7.68f;
+        else if (opt == "10.24 kWh") cap_kwh = 10.24f;
+        
+        float wh_usable = (usable_soc / 100.0f) * cap_kwh * 1000.0f;
+        float hours = wh_usable / discharge_w;
+        
+        int h = (int)hours;
+        int m = (int)((hours - h) * 60);
+        
+        char buf[32];
+        if (h > 99) {
+          return {">99h"};
+        } else {
+          sprintf(buf, "%dh %02dmin", h, m);
+          return {buf};
+        }
+      }
+      
+      return {"Standby"};
+
+  - platform: wifi_info
+    ip_address:
+      name: "IP Adresse"
