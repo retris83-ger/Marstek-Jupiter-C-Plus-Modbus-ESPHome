@@ -71,10 +71,13 @@ In der Datei `marstek-jupiter-c-modbus.yaml` ist in **Zeile 44** eine feste IP-A
 
 ## 🎨 Dashboard (Vorschlag)
 
-Hier ist ein modernes Layout mit **Mushroom Cards** und **ApexCharts**.
+So sieht die fertige Integration im Home Assistant aus (als Beipiel):
+
+![Dashboard Übersicht 1](https://github.com/retris83-ger/Marstek-Jupiter-C-Plus-Modbus-ESPHome/blob/main/Dashboard/Bild1.jpg?raw=true)
+![Dashboard Übersicht 2](https://github.com/retris83-ger/Marstek-Jupiter-C-Plus-Modbus-ESPHome/blob/main/Dashboard/Bild2.jpg?raw=true)
 
 <details>
-<summary>👉 Dashboard-Code ausklappen</summary>
+<summary>👉 Hier klicken für den Dashboard-Code (YAML)</summary>
 
 ```yaml
 type: sections
