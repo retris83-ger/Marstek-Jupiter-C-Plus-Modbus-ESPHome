@@ -52,12 +52,15 @@ Diese Konfiguration nutzt eine **`secrets.yaml`**, um deine WLAN-Daten zu schüt
 ```yaml
 wifi_ssid: "DEINE_SSID"
 wifi_password: "DEIN_PASSWORT"
+esp_ip: "IP-ADRESSE DES ESP32"
+esp_gateway: "192.168.201.1"
+esp_subnet: "255.255.255.0"
 ```
 
 ### 2. Statische IP-Adresse (Wichtig!)
-In der Datei `marstek-jupiter-c-modbus.yaml` ist in **Zeile 44** eine feste IP-Adresse (`192.168.201.93`) vordefiniert. 
+In der Datei `marstek-jupiter-c-modbus.yaml` ist in **Zeile 44** eine feste IP-Adresse über die `secrets.yaml` vordefiniert. 
 * **Anpassen:** Ändere diese Adresse auf eine freie IP in deinem Netzwerk.
-* **DHCP:** Falls du keine feste IP möchtest, lösche die Zeilen 43 bis 46 (`manual_ip` Block).
+* **DHCP:** Falls du keine feste IP möchtest, lösche die Zeilen 43 bis 46 (`manual_ip` Block in der `marstek-jupiter-c-modbus.yaml`).
 
 ### 3. Schritte:
 1. Lade die YAML-Dateien in deinen ESPHome-Ordner.
