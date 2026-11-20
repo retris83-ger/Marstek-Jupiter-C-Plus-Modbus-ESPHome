@@ -35,7 +35,7 @@ button:
     id: system_reboot_btn
 
 logger:
-  level: DEBUG
+  level: INFO
 
 wifi:
   ssid: !secret wifi_ssid
@@ -58,19 +58,14 @@ modbus:
   uart_id: modbus_bus
 
 modbus_controller:
-  - id: marstek_fast
+  # Nur EIN Controller: mehrere Controller mit gleicher Adresse auf einem Bus
+  # empfangen gegenseitig ihre Antworten (-> Log-Spam und falsche Werte).
+  # Langsamere Abfragen laufen ueber skip_updates an den Sensoren.
+  - id: marstek
     address: 1
     modbus_id: modbus1
     setup_priority: -10
     update_interval: 5s
-  - id: marstek_slow
-    address: 1
-    modbus_id: modbus1
-    update_interval: 30s 
-  - id: marstek_v_slow
-    address: 1
-    modbus_id: modbus1
-    update_interval: 300s
 
 number:
   - platform: template
@@ -110,7 +105,8 @@ sensor:
   # PV STRINGS 1 BIS 4 (Mit Peak-Schutz)
   # ==========================================
   - platform: modbus_controller
-    modbus_controller_id: marstek_slow
+    modbus_controller_id: marstek
+    skip_updates: 5
     name: "PV1 Spannung"
     address: 0x0001
     register_type: holding
@@ -118,7 +114,8 @@ sensor:
     unit_of_measurement: "V"
     filters: [multiply: 0.1]
   - platform: modbus_controller
-    modbus_controller_id: marstek_slow
+    modbus_controller_id: marstek
+    skip_updates: 5
     name: "PV1 Strom"
     address: 0x0002
     register_type: holding
@@ -126,7 +123,7 @@ sensor:
     unit_of_measurement: "A"
     filters: [multiply: 0.1]
   - platform: modbus_controller
-    modbus_controller_id: marstek_fast
+    modbus_controller_id: marstek
     name: "PV1 Leistung"
     id: pv1_p
     address: 0x0003
@@ -141,7 +138,8 @@ sensor:
       - lambda: "if (x > 800.0) return {}; return x;"
 
   - platform: modbus_controller
-    modbus_controller_id: marstek_slow
+    modbus_controller_id: marstek
+    skip_updates: 5
     name: "PV2 Spannung"
     address: 0x0004
     register_type: holding
@@ -149,7 +147,8 @@ sensor:
     unit_of_measurement: "V"
     filters: [multiply: 0.1]
   - platform: modbus_controller
-    modbus_controller_id: marstek_slow
+    modbus_controller_id: marstek
+    skip_updates: 5
     name: "PV2 Strom"
     address: 0x0005
     register_type: holding
@@ -157,7 +156,7 @@ sensor:
     unit_of_measurement: "A"
     filters: [multiply: 0.1]
   - platform: modbus_controller
-    modbus_controller_id: marstek_fast
+    modbus_controller_id: marstek
     name: "PV2 Leistung"
     id: pv2_p
     address: 0x0006
@@ -171,7 +170,8 @@ sensor:
       - lambda: "if (x > 800.0) return {}; return x;"
 
   - platform: modbus_controller
-    modbus_controller_id: marstek_slow
+    modbus_controller_id: marstek
+    skip_updates: 5
     name: "PV3 Spannung"
     address: 0x0007
     register_type: holding
@@ -179,7 +179,8 @@ sensor:
     unit_of_measurement: "V"
     filters: [multiply: 0.1]
   - platform: modbus_controller
-    modbus_controller_id: marstek_slow
+    modbus_controller_id: marstek
+    skip_updates: 5
     name: "PV3 Strom"
     address: 0x0008
     register_type: holding
@@ -187,7 +188,7 @@ sensor:
     unit_of_measurement: "A"
     filters: [multiply: 0.1]
   - platform: modbus_controller
-    modbus_controller_id: marstek_fast
+    modbus_controller_id: marstek
     name: "PV3 Leistung"
     id: pv3_p
     address: 0x0009
@@ -201,7 +202,8 @@ sensor:
       - lambda: "if (x > 800.0) return {}; return x;"
 
   - platform: modbus_controller
-    modbus_controller_id: marstek_slow
+    modbus_controller_id: marstek
+    skip_updates: 5
     name: "PV4 Spannung"
     address: 0x000A
     register_type: holding
@@ -209,7 +211,8 @@ sensor:
     unit_of_measurement: "V"
     filters: [multiply: 0.1]
   - platform: modbus_controller
-    modbus_controller_id: marstek_slow
+    modbus_controller_id: marstek
+    skip_updates: 5
     name: "PV4 Strom"
     address: 0x000B
     register_type: holding
@@ -217,7 +220,7 @@ sensor:
     unit_of_measurement: "A"
     filters: [multiply: 0.1]
   - platform: modbus_controller
-    modbus_controller_id: marstek_fast
+    modbus_controller_id: marstek
     name: "PV4 Leistung"
     id: pv4_p
     address: 0x000C
@@ -234,7 +237,7 @@ sensor:
   # BASISWERTE
   # ==========================================
   - platform: modbus_controller
-    modbus_controller_id: marstek_fast
+    modbus_controller_id: marstek
     name: "Netz Ausgangsleistung"
     id: out_p
     address: 0x000D
@@ -249,7 +252,8 @@ sensor:
       - lambda: "if (x > 1000.0) return {}; return x;"
 
   - platform: modbus_controller
-    modbus_controller_id: marstek_slow
+    modbus_controller_id: marstek
+    skip_updates: 5
     name: "Batterie Spannung"
     id: b_u_raw
     address: 0x000F
@@ -259,7 +263,7 @@ sensor:
     filters: [multiply: 0.1]
 
   - platform: modbus_controller
-    modbus_controller_id: marstek_fast
+    modbus_controller_id: marstek
     name: "Batterie SOC"
     id: b_soc_raw
     address: 0x0010
@@ -273,7 +277,7 @@ sensor:
           window_size: 5
 
   - platform: modbus_controller
-    modbus_controller_id: marstek_fast
+    modbus_controller_id: marstek
     name: "Batterie Strom"
     id: b_i_raw
     address: 0x0011
@@ -286,7 +290,8 @@ sensor:
   # ERTRAGS-STATISTIKEN
   # ==========================================
   - platform: modbus_controller
-    modbus_controller_id: marstek_v_slow
+    modbus_controller_id: marstek
+    skip_updates: 59
     name: "Tages Erzeugung"
     address: 0x0013
     register_type: holding
@@ -300,7 +305,8 @@ sensor:
       - lambda: "if (x > 60.0) return {}; return x;"
 
   - platform: modbus_controller
-    modbus_controller_id: marstek_v_slow
+    modbus_controller_id: marstek
+    skip_updates: 59
     name: "Monats Erzeugung"
     address: 0x0015
     register_type: holding
@@ -310,7 +316,8 @@ sensor:
     filters: [multiply: 0.01]
 
   - platform: modbus_controller
-    modbus_controller_id: marstek_v_slow
+    modbus_controller_id: marstek
+    skip_updates: 59
     name: "Netz Einspeisung Tag"
     address: 0x0017
     register_type: holding
@@ -323,7 +330,8 @@ sensor:
   # TEMPERATUREN
   # ==========================================
   - platform: modbus_controller
-    modbus_controller_id: marstek_v_slow
+    modbus_controller_id: marstek
+    skip_updates: 59
     name: "System Temperatur 1"
     address: 0x0020
     register_type: holding
@@ -333,7 +341,8 @@ sensor:
     filters: [multiply: 0.01]
 
   - platform: modbus_controller
-    modbus_controller_id: marstek_v_slow
+    modbus_controller_id: marstek
+    skip_updates: 59
     name: "System Temperatur 2"
     address: 0x0021
     register_type: holding
@@ -347,6 +356,7 @@ sensor:
   # ==========================================
   - platform: template
     name: "Solar Gesamtleistung"
+    update_interval: 5s
     id: total_pv
     unit_of_measurement: "W"
     device_class: power
@@ -360,6 +370,7 @@ sensor:
 
   - platform: template
     name: "Batterie Ladeleistung"
+    update_interval: 5s
     id: b_charge_p
     unit_of_measurement: "W"
     device_class: power
@@ -371,6 +382,7 @@ sensor:
 
   - platform: template
     name: "Batterie Entladeleistung"
+    update_interval: 5s
     id: b_discharge_p
     unit_of_measurement: "W"
     device_class: power
